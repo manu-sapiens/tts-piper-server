@@ -5,7 +5,8 @@ FROM python:3.10-slim
 WORKDIR /piper
 
 # Install dependencies
-RUN pip install piper-tts fastapi uvicorn python-multipart
+RUN pip install piper-tts fastapi uvicorn python-multipart python-dotenv
+
 
 # Copy the voices directory into the container
 COPY voices /piper/voices/

@@ -4,6 +4,10 @@ from starlette.background import BackgroundTask
 import subprocess
 import os
 import uuid
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI()
 
@@ -11,6 +15,9 @@ app = FastAPI()
 VOICE_DIR = "/piper/voices"
 OUTPUT_DIR = "/piper/output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# Get the default voice model from environment variable
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL")
 
 def cleanup_files(files):
     """Delete temporary files."""
@@ -25,15 +32,27 @@ def cleanup_files(files):
 @app.post("/synthesize/")
 async def synthesize(
     text: str = Form(...),
-    model: str = Form(...)
+    model: str = Form(None)  # Make model optional
 ):
     """
     Synthesizes speech from text using Piper and returns a WAV file.
     - `text`: The text to convert to speech.
-    - `model`: The base name of the model (e.g., 'en_US-ryan-high').
+    - `model`: (Optional) The base name of the model (e.g., 'en_US-ryan-high'). Uses default if not provided.
     """
-    print("Received text:", text)
-    print("Received model:", model)
+    if not model:
+        if DEFAULT_MODEL:
+            model = DEFAULT_MODEL  # Use default model from .env
+            print(f"No model provided. Using default model from .env: {model}")
+        else:
+            # Handle case where DEFAULT_MODEL is not set
+            raise HTTPException(
+                status_code=500,
+                detail="No default model specified and no model provided."
+            )
+    else:
+        print(f"Received model: {model}")
+
+    print(f"Received text: {text}")
 
     try:
         # Construct paths to model and config files
@@ -83,4 +102,22 @@ async def synthesize(
 
     except Exception as e:
         print("Exception occurred:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Existing /voices/ endpoint remains unchanged
+@app.get("/voices/")
+async def list_voices():
+    """
+    Returns a list of available voice models.
+    """
+    try:
+        # List all .onnx files in the VOICE_DIR
+        voice_files = [f for f in os.listdir(VOICE_DIR) if f.endswith('.onnx')]
+        # Extract the base names of the models
+        voices = [os.path.splitext(f)[0] for f in voice_files]
+        # Remove any duplicates and sort the list
+        voices = sorted(set(voices))
+        return {"voices": voices}
+    except Exception as e:
+        print("Exception occurred while listing voices:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
