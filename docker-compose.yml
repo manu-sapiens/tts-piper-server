@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  piper-tts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8038:8038"
+    volumes:
+      - ./voices:/piper/voices
+      - ./api.py:/piper/api.py
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8038/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
