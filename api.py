@@ -57,13 +57,30 @@ async def synthesize(
     try:
         # Construct paths to model and config files
         model_path = os.path.join(VOICE_DIR, f"{model}.onnx")
+        # Try both hyphen and underscore variants for config
         config_path = os.path.join(VOICE_DIR, f"{model}.onnx.json")
+        config_path_alt = os.path.join(VOICE_DIR, f"{model.replace('-', '_')}.onnx.json")
 
-        # Ensure the model and config files exist
-        if not os.path.exists(model_path) or not os.path.exists(config_path):
+        print(f"Model path: {model_path}")
+        print(f"Config path: {config_path}")
+        print(f"Alternative config path: {config_path_alt}")
+
+        # Check model file
+        if not os.path.exists(model_path):
             raise HTTPException(
                 status_code=404,
-                detail=f"Model or config not found for '{model}'"
+                detail=f"Model file not found: '{model}.onnx'"
+            )
+        
+        # Try both config file variants
+        if os.path.exists(config_path):
+            use_config_path = config_path
+        elif os.path.exists(config_path_alt):
+            use_config_path = config_path_alt
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Config file not found for '{model}'"
             )
 
         # Generate a unique output filename
@@ -75,7 +92,7 @@ async def synthesize(
             [
                 "piper",
                 "-m", model_path,
-                "--config", config_path,
+                "--config", use_config_path,
                 "--output-file", output_wav
             ],
             input=text.encode('utf-8'),
