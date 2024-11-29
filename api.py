@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Form
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 import subprocess
 import os
 import uuid
@@ -11,15 +12,26 @@ VOICE_DIR = "/piper/voices"
 OUTPUT_DIR = "/piper/output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+def cleanup_files(files):
+    """Delete temporary files."""
+    for file in files:
+        try:
+            if os.path.exists(file):
+                os.remove(file)
+                print(f"Deleted temporary file: {file}")
+        except Exception as e:
+            print(f"Error deleting file {file}: {e}")
+
 @app.post("/synthesize/")
-async def synthesize(text: str = Form(...), model: str = Form(...)):
+async def synthesize(
+    text: str = Form(...),
+    model: str = Form(...)
+):
     """
-    Synthesizes speech from text using Piper.
+    Synthesizes speech from text using Piper and returns a WAV file.
     - `text`: The text to convert to speech.
     - `model`: The base name of the model (e.g., 'en_US-ryan-high').
     """
-
-    # Debugging input data
     print("Received text:", text)
     print("Received model:", model)
 
@@ -36,40 +48,39 @@ async def synthesize(text: str = Form(...), model: str = Form(...)):
             )
 
         # Generate a unique output filename
-        output_file = os.path.join(OUTPUT_DIR, f"{uuid.uuid4()}.raw")
+        output_filename = f"{uuid.uuid4()}.wav"
+        output_wav = os.path.join(OUTPUT_DIR, output_filename)
 
-        # Run piper to generate the audio
+        # Run Piper to generate WAV file
         process = subprocess.run(
             [
                 "piper",
                 "-m", model_path,
                 "--config", config_path,
-                "--output-raw"
+                "--output-file", output_wav
             ],
-            input=text.encode('utf-8'),  # Encode input text to bytes
-            stdout=subprocess.PIPE,      # Capture raw audio (bytes)
-            stderr=subprocess.PIPE       # Capture errors (bytes)
+            input=text.encode('utf-8'),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
-
-        # Log stdout and stderr for debugging
-        print("Subprocess return code:", process.returncode)
-        print("Subprocess STDOUT length:", len(process.stdout))
-        print("Subprocess STDERR:", process.stderr.decode('utf-8', errors='ignore'))
 
         # Check for errors
         if process.returncode != 0:
+            error_message = process.stderr.decode('utf-8', errors='ignore')
+            print("Piper error:", error_message)
             raise HTTPException(
                 status_code=500,
-                detail=f"Piper error: {process.stderr.decode('utf-8', errors='ignore')}"
+                detail=f"Piper error: {error_message}"
             )
 
-        # Save raw audio output to a file
-        with open(output_file, "wb") as f:
-            f.write(process.stdout)
-
-        return FileResponse(output_file, media_type="audio/raw")
+        # Return the WAV file and clean up after sending
+        return FileResponse(
+            path=output_wav,
+            media_type="audio/wav",
+            filename=os.path.basename(output_wav),
+            background=BackgroundTask(cleanup_files, [output_wav])
+        )
 
     except Exception as e:
-        # Log the exception for debugging
         print("Exception occurred:", str(e))
         raise HTTPException(status_code=500, detail=str(e))

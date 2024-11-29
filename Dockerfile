@@ -13,9 +13,6 @@ COPY voices /piper/voices/
 # Copy the API script
 COPY api.py /piper/
 
-# Create the output directory inside the container
-RUN mkdir /piper/output
-
 # Expose the FastAPI port
 EXPOSE 8038
 

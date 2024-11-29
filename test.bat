@@ -15,29 +15,18 @@ if "%~1"=="" (
     set TEXT=%~1
 )
 
-REM Set output file paths
-set OUTPUT_RAW=output\speech.raw
-set OUTPUT_WAV=output\speech.wav
+REM Set output file path
+set OUTPUT_FILE=output\speech.wav
 
 REM Make the API call
-curl -X POST "%API_URL%" -F "text=%TEXT%" -F "model=%MODEL%" --output %OUTPUT_RAW%
+curl -X POST "%API_URL%" -F "text=%TEXT%" -F "model=%MODEL%" --output %OUTPUT_FILE%
 
-REM Check if the raw audio file was generated
-if exist %OUTPUT_RAW% (
-    echo Speech synthesis completed. Output saved to %OUTPUT_RAW%.
+REM Check if the audio file was generated
+if exist %OUTPUT_FILE% (
+    echo Speech synthesis completed. Output saved to %OUTPUT_FILE%.
 
-    REM Convert raw audio to WAV using ffmpeg
-    ffmpeg -f s16le -ar 22050 -ac 1 -i %OUTPUT_RAW% %OUTPUT_WAV%
-
-    REM Check if the WAV file was generated
-    if exist %OUTPUT_WAV% (
-        echo Conversion to WAV completed. Output saved to %OUTPUT_WAV%.
-
-        REM Play the WAV file using ffplay
-        ffplay -autoexit -nodisp %OUTPUT_WAV%
-    ) else (
-        echo ERROR: Failed to convert raw audio to WAV.
-    )
+    REM Play the audio file using the default media player
+    start "" "%OUTPUT_FILE%"
 ) else (
     echo ERROR: Failed to generate speech output.
 )
