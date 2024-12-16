@@ -5,7 +5,7 @@ if not exist output (
 )
 
 REM Set variables for the API endpoint, model, and input text
-set API_URL=http://localhost:8038/synthesize/
+set API_URL=http://localhost:3136/synthesize/
 set MODEL=en_GB-cori-high
 
 REM Check if text argument is provided

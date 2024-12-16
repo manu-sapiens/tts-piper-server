@@ -19,6 +19,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # Get the default voice model from environment variable
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL")
 
+
 def cleanup_files(files):
     """Delete temporary files."""
     for file in files:
@@ -28,6 +29,7 @@ def cleanup_files(files):
                 print(f"Deleted temporary file: {file}")
         except Exception as e:
             print(f"Error deleting file {file}: {e}")
+
 
 @app.post("/synthesize/")
 async def synthesize(

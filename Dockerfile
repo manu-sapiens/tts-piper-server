@@ -15,7 +15,7 @@ COPY voices /piper/voices/
 COPY api.py /piper/
 
 # Expose the FastAPI port
-EXPOSE 8038
+EXPOSE 3136
 
 # Start the FastAPI server
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8038"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "3136"]

@@ -2,7 +2,7 @@
 REM Test the /voices/ route of the Piper TTS API
 
 REM Set the API endpoint URL
-set API_URL=http://localhost:8038/voices/
+set API_URL=http://localhost:3136/voices/
 
 REM Make the GET request and display the response
 curl -s -X GET "%API_URL%"

@@ -1,5 +1,5 @@
 @echo off
-set PORT=8038
+set PORT=3136
 
 echo Checking for processes using port %PORT%...
 for /f "tokens=5" %%P in ('netstat -ano ^| findstr :%PORT%') do (
