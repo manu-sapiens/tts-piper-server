@@ -1,0 +1,16 @@
+services:
+  app:
+    image: ${DOCKER_USERNAME}/PROJECT_NAME:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./data:/app/data
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
